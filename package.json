@@ -1,0 +1,54 @@
+{
+  "name": "set-cpp",
+  "displayName": "set-cpp — C++ Compiler Setup & Run",
+  "description": "Install this one extension and C++ just works — g++/MinGW is detected or installed automatically, the official C/C++ extension comes bundled, and a Run button appears on .cpp files. No terminal commands, no manual downloads.",
+  "version": "1.0.0",
+  "publisher": "Syntrojex",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Programming Languages", "Other"],
+  "keywords": ["c++", "cpp", "mingw", "g++", "gcc", "compiler", "setup", "run", "windows", "beginner"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "extensionDependencies": ["ms-vscode.cpptools"],
+  "contributes": {
+    "commands": [
+      {
+        "command": "set-cpp.setup",
+        "title": "Setup C++ Compiler (runs automatically on install)",
+        "category": "set-cpp"
+      },
+      {
+        "command": "set-cpp.runActiveFile",
+        "title": "Run Active C++ File",
+        "category": "set-cpp"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceExtname == .cpp || resourceExtname == .cc || resourceExtname == .cxx",
+          "command": "set-cpp.runActiveFile",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/run": [
+        {
+          "when": "resourceExtname == .cpp || resourceExtname == .cc || resourceExtname == .cxx",
+          "command": "set-cpp.runActiveFile",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Syntrojex/set-cpp-vscode.git"
+  },
+  "author": {
+    "name": "Muhammad Mustafa Amir",
+    "url": "https://github.com/Syntrojex"
+  },
+  "license": "MIT"
+}
