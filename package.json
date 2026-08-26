@@ -1,17 +1,40 @@
 {
   "name": "set-cpp",
-  "displayName": "set-cpp — C++ Compiler Setup & Run",
-  "description": "Install this one extension and C++ just works — g++/MinGW is detected or installed automatically, the official C/C++ extension comes bundled, and a Run button appears on .cpp files. No terminal commands, no manual downloads.",
+  "displayName": "Set C++ — C++ Setup for VS Code",
+  "description": "Zero-config C++ development for VS Code on Windows — automatically detects or installs MinGW-w64 and configures everything for you.",
   "version": "1.0.0",
   "publisher": "Syntrojex",
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Programming Languages", "Other"],
-  "keywords": ["c++", "cpp", "mingw", "g++", "gcc", "compiler", "setup", "run", "windows", "beginner"],
-  "activationEvents": ["onStartupFinished"],
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "c++",
+    "cpp",
+    "c-plus-plus",
+    "mingw",
+    "mingw-w64",
+    "g++",
+    "gcc",
+    "compiler",
+    "cpp-development",
+    "vscode",
+    "windows",
+    "setup",
+    "run",
+    "beginner"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./extension.js",
-  "extensionDependencies": ["ms-vscode.cpptools"],
+  "extensionDependencies": [
+    "ms-vscode.cpptools"
+  ],
   "contributes": {
     "commands": [
       {
@@ -44,7 +67,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Syntrojex/set-cpp-vscode.git"
+    "url": "https://github.com/Syntrojex/set-cpp-vscode.git"
   },
   "author": {
     "name": "Muhammad Mustafa Amir",
