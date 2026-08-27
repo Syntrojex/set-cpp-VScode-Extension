@@ -22,7 +22,7 @@ async function setupWithProgress() {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: 'set-cpp: setting up C++ compiler',
+        title: 'setify-cpp: setting up C++ compiler',
         cancellable: false
       },
       async (progress) => {
@@ -32,9 +32,9 @@ async function setupWithProgress() {
         });
 
         if (result.ok) {
-          vscode.window.showInformationMessage('set-cpp: C++ compiler is ready. Reload VS Code to be safe.');
+          vscode.window.showInformationMessage('setify-cpp: C++ compiler is ready. Reload VS Code to be safe.');
         } else {
-          vscode.window.showErrorMessage(`set-cpp: setup failed — ${result.message}`);
+          vscode.window.showErrorMessage(`setify-cpp: setup failed — ${result.message}`);
         }
       }
     );
@@ -46,19 +46,19 @@ async function setupWithProgress() {
 async function runActiveFile() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    vscode.window.showErrorMessage('set-cpp: no active file to run.');
+    vscode.window.showErrorMessage('setify-cpp: no active file to run.');
     return;
   }
 
   const filePath = editor.document.fileName;
   if (!CPP_EXT_RE.test(filePath)) {
-    vscode.window.showErrorMessage('set-cpp: active file is not a .cpp/.cc/.cxx file.');
+    vscode.window.showErrorMessage('setify-cpp: active file is not a .cpp/.cc/.cxx file.');
     return;
   }
 
   if (process.platform === 'win32' && !findOnPath()) {
     const choice = await vscode.window.showWarningMessage(
-      'set-cpp: no C++ compiler found on PATH yet.',
+      'setify-cpp: no C++ compiler found on PATH yet.',
       'Set It Up'
     );
     if (choice === 'Set It Up') await setupWithProgress();
@@ -69,22 +69,24 @@ async function runActiveFile() {
 
   const dir = path.dirname(filePath);
   const baseName = path.basename(filePath, path.extname(filePath));
-  const exePath = path.join(dir, `${baseName}.exe`);
+  const exeName = process.platform === 'win32' ? `${baseName}.exe` : baseName;
+  const exePath = path.join(dir, exeName);
+  const runPrefix = process.platform === 'win32' ? '' : './';
 
   const terminal = vscode.window.createTerminal('Run C++');
   terminal.show();
-  terminal.sendText(`g++ "${filePath}" -o "${exePath}" && "${exePath}"`);
+  terminal.sendText(`g++ "${filePath}" -o "${exePath}" && ${runPrefix}"${exePath}"`);
 }
 
 function activate(context) {
-  outputChannel = vscode.window.createOutputChannel('set-cpp');
+  outputChannel = vscode.window.createOutputChannel('setify-cpp');
   context.subscriptions.push(outputChannel);
 
   // Status bar Run button — only visible while a .cpp file is focused.
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBarItem.text = '$(play) Run C++';
-  statusBarItem.tooltip = 'Compile and run this C++ file (set-cpp)';
-  statusBarItem.command = 'set-cpp.runActiveFile';
+  statusBarItem.tooltip = 'Compile and run this C++ file (setify-cpp)';
+  statusBarItem.command = 'setify-cpp.runActiveFile';
 
   function syncStatusBar(editor) {
     if (editor && CPP_EXT_RE.test(editor.document.fileName)) {
@@ -98,8 +100,8 @@ function activate(context) {
   context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(syncStatusBar));
   context.subscriptions.push(statusBarItem);
 
-  context.subscriptions.push(vscode.commands.registerCommand('set-cpp.setup', setupWithProgress));
-  context.subscriptions.push(vscode.commands.registerCommand('set-cpp.runActiveFile', runActiveFile));
+  context.subscriptions.push(vscode.commands.registerCommand('setify-cpp.setup', setupWithProgress));
+  context.subscriptions.push(vscode.commands.registerCommand('setify-cpp.runActiveFile', runActiveFile));
 
   // Fully automatic — the ONLY manual step is installing this extension.
   // No prompt, no terminal, no npx: if there's no compiler, it just sets one up.
