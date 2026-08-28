@@ -13,10 +13,12 @@ function findOnPath() {
   }
 }
 
+const GPP_BINARY = process.platform === 'win32' ? 'g++.exe' : 'g++';
+
 function scanKnownLocations() {
   const found = [];
   for (const dir of KNOWN_INSTALL_LOCATIONS) {
-    const gppPath = path.join(dir, 'g++.exe');
+    const gppPath = path.join(dir, GPP_BINARY);
     if (fs.existsSync(gppPath)) {
       try {
         const out = execFileSync(gppPath, ['--version'], { encoding: 'utf8' });
