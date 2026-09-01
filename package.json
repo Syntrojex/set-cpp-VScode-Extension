@@ -1,8 +1,8 @@
 {
   "name": "setify-cpp",
   "displayName": "Setify C++ — C++ Setup for VS Code",
-  "description": "Zero-config C++ development for VS Code on Windows — automatically detects or installs MinGW-w64 and configures everything for you.",
-  "version": "1.0.2",
+  "description": "Zero-config C++ development for VS Code on Windows — automatically detects or installs MinGW-w64 and the official C/C++ extension, so VS Code's built-in Run just works.",
+  "version": "1.0.6",
   "publisher": "Syntrojex",
   "icon": "images/icon.png",
   "engines": {
@@ -36,33 +36,12 @@
         "command": "setify-cpp.setup",
         "title": "Setup C++ Compiler (runs automatically on install)",
         "category": "Setify C++"
-      },
-      {
-        "command": "setify-cpp.runActiveFile",
-        "title": "Run Active C++ File",
-        "category": "Setify C++"
       }
-    ],
-    "menus": {
-      "editor/context": [
-        {
-          "when": "resourceExtname == .cpp || resourceExtname == .cc || resourceExtname == .cxx",
-          "command": "setify-cpp.runActiveFile",
-          "group": "navigation"
-        }
-      ],
-      "editor/title/run": [
-        {
-          "when": "resourceExtname == .cpp || resourceExtname == .cc || resourceExtname == .cxx",
-          "command": "setify-cpp.runActiveFile",
-          "group": "navigation"
-        }
-      ]
-    }
+    ]
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Syntrojex/seify-cpp-vscode.git"
+    "url": "https://github.com/Syntrojex/set-cpp-vscode.git"
   },
   "author": {
     "name": "Muhammad Mustafa Amir",
