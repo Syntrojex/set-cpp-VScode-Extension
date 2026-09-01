@@ -16,7 +16,7 @@ const MINGW_ZIP_URL =
 const PRIMARY_INSTALL_DIR = 'C:\\mingw64';
 const FALLBACK_INSTALL_DIR = 'C:\\Users\\Public\\mingw64';
 
-const ZIP_TMP_PATH = path.join(os.tmpdir(), 'set-cpp-download.zip');
+const ZIP_TMP_PATH = path.join(os.tmpdir(), 'setify-cpp-download.zip');
 
 // Common places g++/MinGW/clang already lives, checked during auto-detection
 // so we never re-download or re-trigger an install that's already there.

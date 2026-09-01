@@ -1,7 +1,7 @@
 'use strict';
 const https = require('https');
 const fs = require('fs');
-const { execFileSync } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
 const { MINGW_ZIP_URL, ZIP_TMP_PATH, PRIMARY_INSTALL_DIR, FALLBACK_INSTALL_DIR } = require('./config');
 
@@ -58,14 +58,25 @@ function download(url, destPath) {
   });
 }
 
-// Uses Windows' built-in PowerShell Expand-Archive — no 7zip / no npm dependency required.
+// Uses Windows' built-in PowerShell Expand-Archive — no 7zip / no npm dependency
+// required. Runs ASYNCHRONOUSLY (spawn, not execFileSync): the MinGW zip is
+// ~260MB and extraction can take 10-60+ seconds. A synchronous call here would
+// block VS Code's whole extension host process for that entire time, which is
+// exactly what was causing the "extension host unresponsive / reload?" prompt.
 function extractZip(zipPath, destDir) {
-  fs.mkdirSync(destDir, { recursive: true });
-  execFileSync(
-    'powershell.exe',
-    ['-NoProfile', '-Command', `Expand-Archive -LiteralPath "${zipPath}" -DestinationPath "${destDir}" -Force`],
-    { stdio: 'ignore' }
-  );
+  return new Promise((resolve, reject) => {
+    fs.mkdirSync(destDir, { recursive: true });
+    const ps = spawn(
+      'powershell.exe',
+      ['-NoProfile', '-Command', `Expand-Archive -LiteralPath "${zipPath}" -DestinationPath "${destDir}" -Force`],
+      { stdio: 'ignore' }
+    );
+    ps.on('error', reject);
+    ps.on('exit', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Extraction failed with exit code ${code}`));
+    });
+  });
 }
 
 // winlibs zips extract into a top-level "mingw64" folder — flatten it up one level.
@@ -106,7 +117,7 @@ async function downloadAndInstall(onFallback) {
     if (typeof onFallback === 'function') onFallback(targetDir);
   }
 
-  extractZip(ZIP_TMP_PATH, targetDir);
+  await extractZip(ZIP_TMP_PATH, targetDir);
   flattenIfNested(targetDir);
   fs.unlinkSync(ZIP_TMP_PATH);
   return targetDir;
