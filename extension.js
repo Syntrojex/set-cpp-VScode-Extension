@@ -1,10 +1,8 @@
 'use strict';
 const vscode = require('vscode');
-const path = require('path');
 const { findOnPath } = require('./src/find-compiler');
+const { isGloballyWired } = require('./src/vscode-global');
 const { runInstall } = require('./src/install-flow');
-
-const CPP_EXT_RE = /\.(cpp|cc|cxx)$/i;
 
 let outputChannel;
 let isSettingUp = false;
@@ -13,99 +11,65 @@ function log(msg) {
   outputChannel.appendLine(msg);
 }
 
+/**
+ * Runs the full detect/install/wire flow with a progress notification.
+ * This is the ONLY thing Setify C++ does — it never adds its own Run
+ * button or menu entries. Once a compiler is detected/installed and wired
+ * into VS Code's global settings, VS Code's own built-in Run (the ▶ icon
+ * the C/C++ extension provides, or the Run menu) just works on its own.
+ */
 async function setupWithProgress() {
-  if (isSettingUp) return;
+  if (isSettingUp) return null;
   isSettingUp = true;
   outputChannel.show(true);
 
+  let result = null;
   try {
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: 'setify-cpp: setting up C++ compiler',
+        title: 'Setify C++: setting up your C++ compiler',
         cancellable: false
       },
       async (progress) => {
-        const result = await runInstall((msg) => {
+        result = await runInstall((msg) => {
           log(msg);
           progress.report({ message: msg });
         });
 
         if (result.ok) {
-          vscode.window.showInformationMessage('setify-cpp: C++ compiler is ready. Reload VS Code to be safe.');
+          vscode.window.showInformationMessage(
+            'Setify C++: your C++ compiler is ready. Open a .cpp file and use VS Code\'s Run button.'
+          );
         } else {
-          vscode.window.showErrorMessage(`setify-cpp: setup failed — ${result.message}`);
+          vscode.window.showWarningMessage(`Setify C++: ${result.message}`);
         }
       }
     );
   } finally {
     isSettingUp = false;
   }
-}
-
-async function runActiveFile() {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    vscode.window.showErrorMessage('setify-cpp: no active file to run.');
-    return;
-  }
-
-  const filePath = editor.document.fileName;
-  if (!CPP_EXT_RE.test(filePath)) {
-    vscode.window.showErrorMessage('setify-cpp: active file is not a .cpp/.cc/.cxx file.');
-    return;
-  }
-
-  if (process.platform === 'win32' && !findOnPath()) {
-    const choice = await vscode.window.showWarningMessage(
-      'setify-cpp: no C++ compiler found on PATH yet.',
-      'Set It Up'
-    );
-    if (choice === 'Set It Up') await setupWithProgress();
-    return;
-  }
-
-  await editor.document.save();
-
-  const dir = path.dirname(filePath);
-  const baseName = path.basename(filePath, path.extname(filePath));
-  const exeName = process.platform === 'win32' ? `${baseName}.exe` : baseName;
-  const exePath = path.join(dir, exeName);
-  const runPrefix = process.platform === 'win32' ? '' : './';
-
-  const terminal = vscode.window.createTerminal('Run C++');
-  terminal.show();
-  terminal.sendText(`g++ "${filePath}" -o "${exePath}" && ${runPrefix}"${exePath}"`);
+  return result;
 }
 
 function activate(context) {
-  outputChannel = vscode.window.createOutputChannel('setify-cpp');
+  outputChannel = vscode.window.createOutputChannel('Setify C++');
   context.subscriptions.push(outputChannel);
 
-  // Status bar Run button — only visible while a .cpp file is focused.
-  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBarItem.text = '$(play) Run C++';
-  statusBarItem.tooltip = 'Compile and run this C++ file (setify-cpp)';
-  statusBarItem.command = 'setify-cpp.runActiveFile';
-
-  function syncStatusBar(editor) {
-    if (editor && CPP_EXT_RE.test(editor.document.fileName)) {
-      statusBarItem.show();
-    } else {
-      statusBarItem.hide();
-    }
-  }
-
-  syncStatusBar(vscode.window.activeTextEditor);
-  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(syncStatusBar));
-  context.subscriptions.push(statusBarItem);
-
   context.subscriptions.push(vscode.commands.registerCommand('setify-cpp.setup', setupWithProgress));
-  context.subscriptions.push(vscode.commands.registerCommand('setify-cpp.runActiveFile', runActiveFile));
 
-  // Fully automatic — the ONLY manual step is installing this extension.
-  // No prompt, no terminal, no npx: if there's no compiler, it just sets one up.
-  if (process.platform === 'win32' && !findOnPath()) {
+  // Fully automatic — the ONLY manual step is installing this extension
+  // (and, on macOS, clicking "Install" in the one native Apple dialog).
+  //
+  // Self-healing, checked fresh on every activation instead of a one-time
+  // flag: setup runs whenever EITHER a compiler isn't found OR VS Code's
+  // global settings aren't wired to one yet. This guarantees a compiler
+  // that already existed still gets wired up (not just newly-installed
+  // ones), AND that wiring which was somehow removed or never completed
+  // gets fixed automatically next time VS Code starts — without ever
+  // re-downloading anything when a compiler is already present, since that
+  // check (isGloballyWired) is just a fast local file read.
+  if (!findOnPath() || !isGloballyWired()) {
     setupWithProgress();
   }
 }
